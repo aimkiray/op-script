@@ -9,6 +9,7 @@ import logging
 from bs4 import BeautifulSoup
 from http import cookiejar
 
+logging.basicConfig(level=logging.INFO)
 # 获取cookies
 session = requests.session()
 session.cookies = cookiejar.LWPCookieJar(filename='cookies')
@@ -16,18 +17,14 @@ session.cookies = cookiejar.LWPCookieJar(filename='cookies')
 try:
     session.cookies.load(ignore_discard=True)
 except Exception as e:
-    logging.warning(e)
-    logging.warning("no cookie")
+    logging.warning("No cookie, because %s", e)
 
 headers = {
-    "Content-Length": 0,
-    "Content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "Cache-Control": "no-cache",
-    "Connection": "Keep-Alive",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0",
     "Host": "panel.op-net.com",
     "Referer": "https://panel.op-net.com/",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36",
-    "X-requested-with": "XMLHttpRequest"
+    "Content-type": "application/x-www-form-urlencoded",
+    "Connection": "Keep-Alive",
 }
 
 
@@ -41,40 +38,47 @@ def get_token():
 
 
 def get_email():
-    return input('请输入邮箱: ')
+    return input('请输入邮箱: \n')
 
 
 def get_password():
-    return input('请输入密码: ')
+    return input('请输入密码: \n')
 
 
 def login(your_email, your_password):
+    logging.info("登录中...")
     data = {
-        'password': your_password,
-        'email': your_email
+        'email': your_email,
+        'password': your_password
     }
     url = 'https://panel.op-net.com/login'
-    session.post(url, data=data, headers=headers)
+    try:
+        session.post(url, data=data, headers=headers)
+    except Exception as e:
+        logging.info("Exception %s, reTry.", e)
+        login(your_email, your_password)
+        return
     # 保存cookies
     session.cookies.save()
 
 
 def isLogin():
+    logging.info("检查是否登陆")
     # 检查是否已经登录
     url = "https://panel.op-net.com/cloud"
-    response = session.get(url, headers=headers)
-    code = response.status_code
-    if code == 200:
-        logging.info("登录成功！")
-        return True
-    else:
-        logging.info("登录失败！")
+    response = session.get(url, headers=headers, allow_redirects=False)
+    if "Can't access your account?" in response.text:
+        logging.info("没有登陆")
         return False
+    else:
+        return True
 
 
 def re_create(csrf_token, vm_id):
     if not csrf_token or vm_id:
-        return
+        logging.error("致命错误！无法获取csrf")
+        exit()
+    logging.info("尝试创建")
     data = {
         "plan": "Plan 01",
         "csrf_token": csrf_token,
@@ -91,15 +95,14 @@ def re_create(csrf_token, vm_id):
 
 
 if __name__ == '__main__':
+    logging.info("start")
     if isLogin():
         logging.info("登录成功！")
     else:
         email = get_email()
         password = get_password()
-        try:
-            login(email, password)
-        except:
-            logging.info("发生异常，重试")
-            login(email, password)
+        login(email, password)
     if isLogin():
-        logging.info("")
+        logging.info("登录成功！")
+        # token = get_token()
+        # re_create(token[0], token[1])
