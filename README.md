@@ -1,8 +1,8 @@
-### 食用指南
+## 食用指南
 
 > Base Ubuntu 16.04 64bit
 
-#### 1. 安装Python
+### 1. 安装Python
 
 咱这个是Python3，请先检查你的Python版本
 
@@ -22,7 +22,7 @@ ln -s /usr/bin/python3.5 /usr/bin/python
 python --version
 ```
 
-#### 2. 安装依赖
+### 2. 安装依赖
 
 Python3自带pip（大概），用pip安装requirements.txt中的依赖
 
@@ -36,7 +36,7 @@ pip install -r requirements.txt
 apt install python3-pip
 ```
 
-#### 3. 开动了
+### 3. 开动了
 
 ```shell
 python OneProvider.py
