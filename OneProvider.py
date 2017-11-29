@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time   : 2017/11/28 15:28
-# @Author : aimkiray
-# @Email  : root@meowwoo.com
+# @Time : 2017/11/28 15:28
 
 import requests
 import logging
@@ -61,8 +59,8 @@ def login(your_email, your_password):
     url = 'https://panel.op-net.com/login'
     try:
         session.post(url, data=data, headers=headers)
-    except Exception as e:
-        logging.info("Exception %s, reTry.", e)
+    except Exception as e_login:
+        logging.info("Exception %s, reTry.", e_login)
         login(your_email, your_password)
         return
     # 保存cookies
