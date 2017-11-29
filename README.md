@@ -26,7 +26,7 @@ ln -s /usr/bin/python3 /usr/bin/python
 python --version
 ```
 
-若提示未安装
+若提示python未安装，可添加别名或使用python3
 
 ```shell
 alias python=/usr/bin/python3
