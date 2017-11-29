@@ -10,7 +10,7 @@
 python --version
 ```
 
-如果是Python2，先换成Python3
+如果是Python2，换成Python3
 
 ```shell
 apt install python3.6
