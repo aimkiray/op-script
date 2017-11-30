@@ -100,26 +100,35 @@ def re_create(csrf_token, vm_id, flag):
     if csrf_token == "" or vm_id == "":
         logging.error("致命错误！无法获取token")
         exit()
-    logging.info("第 %d 次尝试", flag)
+    # 找不同
+    if flag == 1:
+        logging.info("The 1st attempt...")
+    elif flag == 2:
+        logging.info("The 2nd attempt...")
+    elif flag == 3:
+        logging.info("The 3rd attempt...")
+    else:
+        logging.info("The %dth attempt...", flag)
     data = {
         "plan": "Plan 01",
         "csrf_token": csrf_token,
         "vm_id": vm_id,
-        "location": 13,
+        "location": 14,
         "os": "linux-centos-7.1503.01-x86_64-minimal-gen2-v1",
         "hostname": "cat.neko",
         "root": ""
     }
     url = "https://panel.op-net.com/cloud/open"
     response = session.post(url, data=data, headers=headers)
-    if "The requested location is currently unavailable" in response.text or \
-       "it is currently impossible" in response.text:
+    # 判断是否创建成功
+    if "Server Creation Progress" in response.text:
+        logging.debug(response.text)
+        logging.info("嗯？大概是成功了！也有可能是异常？")
+        exit()
+    else:
         flag += 1
         time.sleep(5)
         re_create(csrf_token, vm_id, flag)
-    else:
-        logging.info("创建成功！")
-        exit()
 
 
 if __name__ == '__main__':
