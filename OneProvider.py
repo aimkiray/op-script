@@ -27,15 +27,8 @@ logging.getLogger("").addHandler(console)
 
 # 默认使用 selenium
 requests_mode = False
-# 新建全局 request
-request = requests.session()
-# 获取 cookies
-request.cookies = cookiejar.LWPCookieJar(filename='cookies')
-# 加载 cookies
-try:
-    request.cookies.load(ignore_discard=True)
-except Exception as e:
-    logging.warning("No cookie, because %s", e)
+# 新建 request
+request = ""
 
 # 配置 chrome headless 模式
 chrome_options = webdriver.ChromeOptions()
@@ -132,6 +125,16 @@ def login(email, password):
     response = browser.page_source
     # response = request.get(url, headers=headers)
     if "Can't access your account" in response:
+        # 填充 requests
+        global request
+        request = requests.session()
+        # 获取 cookies
+        request.cookies = cookiejar.LWPCookieJar(filename='cookies')
+        # 加载 cookies
+        try:
+            request.cookies.load(ignore_discard=True)
+        except Exception as e:
+            logging.warning("No cookie, because %s", e)
         logging.info("登录中...")
         data = {
             'email': email,
@@ -271,9 +274,11 @@ def re_create(csrf_token, vm_id, local, flag):
 
 if __name__ == '__main__':
     logging.info("Start")
+    time.sleep(0.1)
     login(get_email(), get_password())
     if requests_mode:
         # 如果没开 anti-bot，则不需要 js 环境
+        time.sleep(0.1)
         token = get_token()
         if token[0] == "" or token[1] == "":
             logging.error("致命错误！无法获取 token")
