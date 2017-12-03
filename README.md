@@ -4,7 +4,7 @@
 
 ## 0. 更新
 
-由于 OneProvider 最近使用了 cdn 的 anti-bot，这里用 selenium & chrome headless 来替代 requests，requests 仍保留，可自动切换。
+由于 OneProvider 最近使用了 cdn 的 anti-bot，这里用 selenium & chrome headless 来替代 requests，requests 仍保留，可自动切换
 
 需额外安装 chrome，版本号大于 59
 
@@ -16,7 +16,7 @@ dpkg -i google-chrome*.deb
 apt install -f
 ```
 
-下载 chromedriver，添加到 PATH 并添加可执行权限
+下载 chromedriver，移动到 PATH 并添加可执行权限
 
 ```shell
 wget https://chromedriver.storage.googleapis.com/2.31/chromedriver_linux64.zip

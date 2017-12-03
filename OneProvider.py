@@ -148,6 +148,39 @@ def get_token():
     return [csrf_token, vm_id]
 
 
+def get_token_selenium():
+    browser.find_element_by_xpath("/html/body/div[1]/div[3]/ul[3]/li[1]/a").click()
+    vm_id = browser.find_element_by_name("vm_id").get_attribute("value")
+    form_vm = '''
+            var form = $("<form></form>");
+            form.attr('action', '/cloud/open');
+            form.attr('method', 'post');
+            var params = {
+                "vm_id": %s,
+                "x": 11,
+                "y": 11
+            };
+            for (var key in params) {
+                var input = $("<input type='hidden' name='" + key + "' />");
+                input.attr('value', params[key]);
+                form.append(input);
+            }
+            form.appendTo("body");
+            form.css('display', 'none');
+            form.submit();''' % vm_id
+    # form_vm = form_vm.replace(" ", "").replace("\n", "")
+    # 检查界面是否加载完毕
+    locator = (By.ID, 'th1')
+    WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
+    browser.execute_script(jquery)
+    browser.execute_script(form_vm)
+    # 检查界面是否加载完毕
+    locator = (By.ID, 'chkLoc_19')
+    WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
+    csrf_token = browser.find_element_by_name("csrf_token").get_attribute("value")
+    return [csrf_token, vm_id]
+
+
 def re_create(csrf_token, vm_id, local, flag):
     # 找不同（计数）
     if flag == 1:
@@ -172,35 +205,14 @@ def re_create(csrf_token, vm_id, local, flag):
         response = request.post(url, data=data, headers=headers)
         response_text = response.text
     else:
-        browser.find_element_by_xpath("/html/body/div[1]/div[3]/ul[3]/li[1]/a").click()
-        vm_id = browser.find_element_by_name("vm_id").get_attribute("value")
-        form_vm = '''
-        var form = $("<form></form>");
-        form.attr('action', '/cloud/open');
-        form.attr('method', 'post');
-        var params = {
-            "vm_id": %s,
-            "x": 11,
-            "y": 11
-        };
-        for (var key in params) {
-            var input = $("<input type='hidden' name='" + key + "' />");
-            input.attr('value', params[key]);
-            form.append(input);
-        }
-        form.appendTo("body");
-        form.css('display', 'none');
-        form.submit();''' % vm_id
-        # form_vm = form_vm.replace(" ", "").replace("\n", "")
-        # 检查界面是否加载完毕
-        locator = (By.ID, 'th1')
-        WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
-        browser.execute_script(jquery)
-        browser.execute_script(form_vm)
-        # 检查界面是否加载完毕
-        locator = (By.ID, 'chkLoc_19')
-        WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
-        csrf_token = browser.find_element_by_name("csrf_token").get_attribute("value")
+        if csrf_token == "" or vm_id == "":
+            token_selenium = get_token_selenium()
+            if token_selenium[0] == "" or token_selenium[1] == "":
+                logging.error("致命错误！无法获取 token")
+                exit()
+            else:
+                csrf_token = token_selenium[0]
+                vm_id = token_selenium[1]
         form_buy = '''
         var form = $("<form></form>");
         form.attr('action', '/cloud/open');
@@ -242,7 +254,8 @@ def re_create(csrf_token, vm_id, local, flag):
         exit()
     else:
         flag += 1
-        time.sleep(2)
+        # +3s提交一次
+        time.sleep(3)
         re_create(csrf_token, vm_id, local, flag)
 
 
