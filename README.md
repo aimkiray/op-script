@@ -1,8 +1,8 @@
-## 食用指南
+# 食用指南
 
 > Base on Ubuntu 16.04 64bit
 
-### 0. 更新
+## 0. 更新
 
 由于 OneProvider 最近使用了 cdn 的 anti-bot，这里用 selenium & chrome headless 来替代 requests，requests 仍保留，可自动切换。
 
@@ -28,7 +28,7 @@ mv ./chromedriver /usr/bin/
 chmod a+x /usr/bin/chromedriver
 ```
 
-### 1. 安装 Python
+## 1. 安装 Python
 
 咱这个是 Python3，请先检查你的Python版本
 
@@ -58,7 +58,7 @@ python --version
 alias python=/usr/bin/python3
 ```
 
-### 2. 安装依赖
+## 2. 安装依赖
 
 Python3 自带 pip（大概），用 pip 安装 requirements.txt 中的依赖
 
@@ -82,7 +82,7 @@ apt install python3-pip
 apt install python3-lxml
 ```
 
-### 3. 开动了
+## 3. 开动了
 
 ```shell
 python OneProvider.py
