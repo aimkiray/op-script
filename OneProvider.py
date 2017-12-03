@@ -27,8 +27,8 @@ logging.getLogger("").addHandler(console)
 
 # 默认使用 selenium
 requests_mode = False
-# 新建 request
-request = ""
+# 新建 requests
+request = requests.session()
 
 # 配置 chrome headless 模式
 chrome_options = webdriver.ChromeOptions()
@@ -39,7 +39,7 @@ chrome_options.add_argument("user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWe
 browser = webdriver.Chrome(chrome_options=chrome_options)
 # 最长等待 120s
 browser.implicitly_wait(100)
-# 抄起 jQuery 就是干（形势所迫）
+# 抄起 jQuery 就是干 XD（形势所迫）
 jquery = open("jquery-3.2.1.min.js", "r").read()
 
 # 自定义 headers
@@ -48,7 +48,7 @@ headers = {
     "Host": "panel.op-net.com",
     "Referer": "https://panel.op-net.com/",
     "Content-type": "application/x-www-form-urlencoded",
-    "Connection": "Keep-Alive",
+    "Connection": "Keep-Alive"
 }
 
 
@@ -79,40 +79,16 @@ def bypass_anti_bot(url, email, password):
     # 检查界面是否加载完毕
     locator = (By.XPATH, '''/html/body/div[1]/div[2]/div[1]/form/ul/li[3]/input''')
     WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
-    # time.sleep(3)
-    # data_cdn = {
-    #     "jschl_vc": driver.find_element_by_name("jschl_vc").get_attribute("value"),
-    #     "pass": driver.find_element_by_name("pass").get_attribute("value"),
-    #     "jschl_answer": driver.find_element_by_name("jschl_answer").get_attribute("jschl_answer")
-    # }
-    # url_cdn = driver.find_element_by_id("challenge-form").get_attribute("action")
-    # logging.info(url_cdn)
-    # response = session.get(url_cdn, data=data_cdn, headers=headers)
     response_text = browser.page_source
     if email == "" and password == "":
         # 非登陆请求，返回响应内容
         return browser
     if "Can't access your account" in response_text:
-        # logging.info("登录中...")
-        # data = {
-        #     'email': email,
-        #     'password': password
-        # }
-        # url_login = 'https://panel.op-net.com/login'
-        # session.post(url_login, data=data, headers=headers)
-        # # 保存cookies
-        # session.cookies.save()
         # 此时在登陆界面
         browser.find_element_by_id("email").send_keys(email)
         browser.find_element_by_id("password").send_keys(password)
         browser.find_element_by_xpath("//input[@class='button'][@type='submit']").submit()
-        # cookies = driver.get_cookies()
-        # for cookie in cookies:
-        #     request.cookies.set(cookie['name'], cookie['value'])
-        #     request.cookies.set_cookie(cookiejar_cookie(cookie))
-        #     session.cookies.set(cookie['name'], cookie['value'])
         logging.info("登录成功！")
-        # driver.close()
     else:
         logging.info("已登录")
 
@@ -125,9 +101,7 @@ def login(email, password):
     response = browser.page_source
     # response = request.get(url, headers=headers)
     if "Can't access your account" in response:
-        # 填充 requests
         global request
-        request = requests.session()
         # 获取 cookies
         request.cookies = cookiejar.LWPCookieJar(filename='cookies')
         # 加载 cookies
