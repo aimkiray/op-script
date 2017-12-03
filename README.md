@@ -4,9 +4,9 @@
 
 ## 0. 更新
 
-由于 OneProvider 最近使用了 cdn 的 anti-bot，这里用 selenium & chrome headless 来替代 requests，requests 仍保留，可自动切换
+由于 OneProvider 最近加了 cdn 的 anti-bot，原方案失效，改用 selenium & chrome headless 来替代 requests；requests 仍保留，可自动切换（未测试）
 
-需额外安装 chrome，版本号大于 59
+需安装 chrome，版本号大于 59
 
 ```shell
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
