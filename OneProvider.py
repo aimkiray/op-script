@@ -8,6 +8,9 @@ import time
 from bs4 import BeautifulSoup
 from http import cookiejar
 from selenium import webdriver
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
 
 # Logging 配置
 # 详细日志记录到当前目录下的 op_log 文件中
@@ -34,10 +37,17 @@ try:
 except Exception as e:
     logging.warning("No cookie, because %s", e)
 
-
+# 配置 chrome headless 模式
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument("user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'")
 # 新建全局 selenium
-driver = webdriver.Chrome(executable_path="C:\\Users\\nekuata\\Desktop\\tools\\chromedriver\\chromedriver.exe")
-
+browser = webdriver.Chrome(chrome_options=chrome_options)
+# 最长等待 120s
+browser.implicitly_wait(100)
+# 抄起 jQuery 就是干（形势所迫）
+jquery = open("jquery-3.2.1.min.js", "r").read()
 
 # 自定义 headers
 headers = {
@@ -50,13 +60,19 @@ headers = {
 
 
 def get_email():
-    email = input('请输入邮箱: \n')
-    return "meowwoolen@gmail.com"
+    while True:
+        email = input('请输入邮箱: \n')
+        if email:
+            break
+    return email
 
 
 def get_password():
-    password = input('请输入密码: \n')
-    return "lassock12138"
+    while True:
+        password = input('请输入密码: \n')
+        if password:
+            break
+    return password
 
 
 def get_local():
@@ -66,8 +82,10 @@ def get_local():
 
 
 def bypass_anti_bot(url, email, password):
-    driver.get(url)
-    time.sleep(5)
+    browser.get(url)
+    # 检查界面是否加载完毕
+    locator = (By.XPATH, '''/html/body/div[1]/div[2]/div[1]/form/ul/li[3]/input''')
+    WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
     # time.sleep(3)
     # data_cdn = {
     #     "jschl_vc": driver.find_element_by_name("jschl_vc").get_attribute("value"),
@@ -77,11 +95,11 @@ def bypass_anti_bot(url, email, password):
     # url_cdn = driver.find_element_by_id("challenge-form").get_attribute("action")
     # logging.info(url_cdn)
     # response = session.get(url_cdn, data=data_cdn, headers=headers)
-    response = driver.page_source
+    response_text = browser.page_source
     if email == "" and password == "":
         # 非登陆请求，返回响应内容
-        return driver
-    if "Can't access your account" in response:
+        return browser
+    if "Can't access your account" in response_text:
         # logging.info("登录中...")
         # data = {
         #     'email': email,
@@ -92,9 +110,9 @@ def bypass_anti_bot(url, email, password):
         # # 保存cookies
         # session.cookies.save()
         # 此时在登陆界面
-        driver.find_element_by_id("email").send_keys(email)
-        driver.find_element_by_id("password").send_keys(password)
-        driver.find_element_by_xpath("//input[@class='button'][@type='submit']").submit()
+        browser.find_element_by_id("email").send_keys(email)
+        browser.find_element_by_id("password").send_keys(password)
+        browser.find_element_by_xpath("//input[@class='button'][@type='submit']").submit()
         # cookies = driver.get_cookies()
         # for cookie in cookies:
         #     request.cookies.set(cookie['name'], cookie['value'])
@@ -110,8 +128,8 @@ def login(email, password):
     logging.info("检查是否登陆")
     # 提交get请求检查是否已经登录
     url = "https://panel.op-net.com/login"
-    driver.get(url)
-    response = driver.page_source
+    browser.get(url)
+    response = browser.page_source
     # response = request.get(url, headers=headers)
     if "Can't access your account" in response:
         logging.info("登录中...")
@@ -124,6 +142,7 @@ def login(email, password):
         # 保存cookies
         request.cookies.save()
         # 如果执行到这里，说明没开anti-bot
+        global requests_mode
         requests_mode = True
     elif "Checking your browser before accessing" in response:
         # 如果启用了anti_bot
@@ -139,12 +158,7 @@ def get_token():
     url_cloud = "https://panel.op-net.com/cloud"
     response_vm_id = request.get(url_cloud, headers=headers)
     soup_vm_id = BeautifulSoup(response_vm_id.text, 'lxml')
-    try:
-        vm_id = soup_vm_id.find('input', attrs={'name': 'vm_id'})['value']
-    except Exception as e_vm_id:
-        logging.debug(e_vm_id)
-        logging.debug(response_vm_id.text)
-        exit()
+    vm_id = soup_vm_id.find('input', attrs={'name': 'vm_id'})['value']
     data = {
         "vm_id": vm_id,
         "x": 20,
@@ -158,17 +172,16 @@ def get_token():
 
 
 def re_create(csrf_token, vm_id, local, flag):
-    response_text = ""
-    if csrf_token or vm_id:
-        # 找不同
-        if flag == 1:
-            logging.info("The 1st attempt...")
-        elif flag == 2:
-            logging.info("The 2nd attempt...")
-        elif flag == 3:
-            logging.info("The 3rd attempt...")
-        else:
-            logging.info("The %dth attempt...", flag)
+    # 找不同（计数）
+    if flag == 1:
+        logging.info("The 1st attempt...")
+    elif flag == 2:
+        logging.info("The 2nd attempt...")
+    elif flag == 3:
+        logging.info("The 3rd attempt...")
+    else:
+        logging.info("The %dth attempt...", flag)
+    if requests_mode:
         data = {
             "plan": "Plan 01",
             "csrf_token": csrf_token,
@@ -182,26 +195,88 @@ def re_create(csrf_token, vm_id, local, flag):
         response = request.post(url, data=data, headers=headers)
         response_text = response.text
     else:
-        driver.find_element_by_xpath("/html/body/div[1]/div[3]/ul[3]/li[1]/a").click()
-        driver.find_element_by_xpath("/html/body/div[1]/div[4]/div[1]/div[2]/table/tbody/tr/td[9]/form/input[2]").click()
+        browser.find_element_by_xpath("/html/body/div[1]/div[3]/ul[3]/li[1]/a").click()
+        vm_id = browser.find_element_by_name("vm_id").get_attribute("value")
+        form_vm = '''
+        var form = $("<form></form>");
+        form.attr('action', '/cloud/open');
+        form.attr('method', 'post');
+        var params = {
+            "vm_id": %s,
+            "x": 11,
+            "y": 11
+        };
+        for (var key in params) {
+            var input = $("<input type='hidden' name='" + key + "' />");
+            input.attr('value', params[key]);
+            form.append(input);
+        }
+        form.appendTo("body");
+        form.css('display', 'none');
+        form.submit();''' % vm_id
+        # form_vm = form_vm.replace(" ", "").replace("\n", "")
+        # 检查界面是否加载完毕
+        locator = (By.ID, 'th1')
+        WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
+        browser.execute_script(jquery)
+        browser.execute_script(form_vm)
+        # 检查界面是否加载完毕
+        locator = (By.ID, 'chkLoc_19')
+        WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator))
+        csrf_token = browser.find_element_by_name("csrf_token").get_attribute("value")
+        form_buy = '''
+        var form = $("<form></form>");
+        form.attr('action', '/cloud/open');
+        form.attr('method', 'post');
+        form.attr('onsubmit', 'ShowLoading()');
+        var params = {
+            "plan": "Plan 01",
+            "csrf_token": "%s",
+            "vm_id": %s,
+            "location": %s,
+            "os": "linux-centos-7.1503.01-x86_64-minimal-gen2-v1",
+            "hostname": "cat.neko",
+            "root": ""
+        };
+        for (var key in params) {
+            var input = $("<input type='hidden' name='" + key + "' />");
+            input.attr('value', params[key]);
+            form.append(input);
+        }
+        form.appendTo("body");
+        form.css('display', 'none');
+        form.submit();''' % (csrf_token, vm_id, local)
+        # form_buy = form_buy.replace(" ", "").replace("\n", "")
+        browser.execute_script(jquery)
+        browser.execute_script(form_buy)
+        # 检查界面是否加载完毕
+        locator_re = (By.XPATH, '''//*[@id="btnSumbit"]''')
+        # locator_else = (By.XPATH, '''''')  TODO 创建成功的情况（咱还没见过呢(┬＿┬)）
+        try:
+            WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator_re))
+        except Exception as timeout:
+            # 可能是超时或成功，继续判断
+            logging.debug(timeout)
+        response_text = browser.page_source
     # 判断是否创建成功
     if "Server Creation Progress" in response_text:
         logging.debug(response_text)
-        logging.info("嗯？大概是成功了！也有可能是异常？")
+        logging.info("嗯？大概是成功了！")
         exit()
     else:
         flag += 1
-        time.sleep(5)
-        re_create(csrf_token, vm_id, flag)
+        time.sleep(2)
+        re_create(csrf_token, vm_id, local, flag)
 
 
 if __name__ == '__main__':
     logging.info("Start")
     login(get_email(), get_password())
     if requests_mode:
+        # 如果没开 anti-bot，则不需要 js 环境
         token = get_token()
         if token[0] == "" or token[1] == "":
-            logging.error("致命错误！无法获取token")
+            logging.error("致命错误！无法获取 token")
             exit()
         re_create(token[0], token[1], get_local(), 1)
     else:

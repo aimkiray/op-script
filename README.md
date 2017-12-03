@@ -2,6 +2,32 @@
 
 > Base on Ubuntu 16.04 64bit
 
+### 0. 更新
+
+由于 OneProvider 最近使用了 cdn 的 anti-bot，这里用 selenium & chrome headless 来替代 requests，requests 仍保留，可自动切换。
+
+需额外安装 chrome，版本号大于 59
+
+```shell
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+
+dpkg -i google-chrome*.deb
+
+apt install -f
+```
+
+下载 chromedriver，添加到 PATH 并添加可执行权限
+
+```shell
+wget https://chromedriver.storage.googleapis.com/2.31/chromedriver_linux64.zip
+
+unzip chromedriver_linux64.zip
+
+mv ./chromedriver /usr/bin/
+
+chmod a+x /usr/bin/chromedriver
+```
+
 ### 1. 安装 Python
 
 咱这个是 Python3，请先检查你的Python版本
