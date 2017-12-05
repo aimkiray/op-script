@@ -16,16 +16,16 @@ dpkg -i google-chrome*.deb
 apt install -f
 ```
 
-下载 chromedriver，移动到 PATH 并添加可执行权限
+在这里下载最新版的 [chromedriver](https://sites.google.com/a/chromium.org/chromedriver/downloads)（一定要最新版，配合最新版 chrome），解压移动到 PATH 并添加可执行权限
 
 ```shell
-wget https://chromedriver.storage.googleapis.com/2.31/chromedriver_linux64.zip
+wget https://chromedriver.storage.googleapis.com/2.33/chromedriver_linux64.zip
 
 unzip chromedriver_linux64.zip
 
 mv ./chromedriver /usr/bin/
 
-chmod a+x /usr/bin/chromedriver
+chmod 775 /usr/bin/chromedriver
 ```
 
 ## 1. 安装 Python

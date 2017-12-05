@@ -42,7 +42,7 @@ browser.implicitly_wait(100)
 # 抄起 jQuery 就是干 XD（形势所迫）
 jquery = open("jquery-3.2.1.min.js", "r").read()
 
-# 自定义 headers
+# 自定义 heade
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0",
     "Host": "panel.op-net.com",
@@ -152,22 +152,22 @@ def get_token_selenium():
     browser.find_element_by_xpath("/html/body/div[1]/div[3]/ul[3]/li[1]/a").click()
     vm_id = browser.find_element_by_name("vm_id").get_attribute("value")
     form_vm = '''
-            var form = $("<form></form>");
-            form.attr('action', '/cloud/open');
-            form.attr('method', 'post');
-            var params = {
-                "vm_id": %s,
-                "x": 11,
-                "y": 11
-            };
-            for (var key in params) {
-                var input = $("<input type='hidden' name='" + key + "' />");
-                input.attr('value', params[key]);
-                form.append(input);
-            }
-            form.appendTo("body");
-            form.css('display', 'none');
-            form.submit();''' % vm_id
+    var form = $("<form></form>");
+    form.attr('action', '/cloud/open');
+    form.attr('method', 'post');
+    var params = {
+        "vm_id": %s,
+        "x": 11,
+        "y": 11
+    };
+    for (var key in params) {
+        var input = $("<input type='hidden' name='" + key + "' />");
+        input.attr('value', params[key]);
+        form.append(input);
+    }
+    form.appendTo("body");
+    form.css('display', 'none');
+    form.submit();''' % vm_id
     # form_vm = form_vm.replace(" ", "").replace("\n", "")
     # 检查界面是否加载完毕
     locator = (By.ID, 'th1')
