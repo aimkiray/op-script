@@ -34,6 +34,7 @@ request = requests.session()
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument("user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'")
 # 新建全局 selenium
 browser = webdriver.Chrome(chrome_options=chrome_options)
@@ -42,7 +43,7 @@ browser.implicitly_wait(100)
 # 抄起 jQuery 就是干 XD（形势所迫）
 jquery = open("jquery-3.2.1.min.js", "r").read()
 
-# 自定义 heade
+# 自定义 header
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0",
     "Host": "panel.op-net.com",
@@ -250,7 +251,9 @@ def re_create(csrf_token, vm_id, local, flag):
     # 判断是否创建成功
     if "Server Creation Progress" in response_text:
         logging.debug(response_text)
-        logging.info("嗯？大概是成功了！")
+        logging.info("咦？好像成功了！")
+        # 关闭 chrome
+        browser.close()
         exit()
     else:
         flag += 1
