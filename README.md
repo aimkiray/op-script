@@ -6,8 +6,6 @@
 
 ## 0. 更新
 
-12.5 更新： 似乎 OneProvider 又移除了 anti-bot，请尝试 master 分支
-
 由于 OneProvider 最近加了 cdn 的 anti-bot，原方案失效，改用 selenium & chrome headless 来替代 requests；requests 仍保留，可自动切换（未测试）
 
 需安装 chrome headless，版本号大于 59
@@ -40,9 +38,9 @@ apt install xvfb
 nohup Xvfb -ac :12 -screen 0 1280x1024x16 &
 # 指定当前 Terminal 是12号显示设备
 export DISPLAY=:12
-# 也可以添加到环境变量
+# 也可以添加到环境变量，粘贴到最后
 vim /etc/profile
-# 复制到最后，然后
+
 source /etc/profile
 ```
 
