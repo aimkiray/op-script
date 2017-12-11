@@ -4,7 +4,7 @@
 
 > 仅练手用
 
-## 0. 更新
+## 1. 更新
 
 由于 OneProvider 最近加了 cdn 的 anti-bot，原方案失效，改用 selenium & chrome headless 来替代 requests；requests 仍保留，可自动切换（未测试）
 
@@ -44,7 +44,7 @@ vim /etc/profile
 source /etc/profile
 ```
 
-## 1. 安装 Python
+## 2. 安装 Python
 
 咱这个是 Python3，请先检查你的Python版本
 
@@ -74,7 +74,7 @@ python --version
 alias python=/usr/bin/python3
 ```
 
-## 2. 安装依赖
+## 3. 安装依赖
 
 Python3 自带 pip（大概），用 pip 安装 requirements.txt 中的依赖
 
