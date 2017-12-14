@@ -30,7 +30,17 @@ mv ./chromedriver /usr/bin/
 chmod 775 /usr/bin/chromedriver
 ```
 
-如果没有显示器，比如服务器，需要安装 Xvfb 假装有 Xwindow
+如果没有显示器，比如服务器，可使用 Xvfb 假装有 Xwindow
+
+> 对于 chrome headless 而言，此步骤不是必须的
+
+先尝试 chrome headless 能否正常启动
+
+```bash
+google-chrome --headless --disable-gpu --no-sandbox
+```
+
+如果无法启动，可尝试 Xvfb（正常则跳过
 
 ```bash
 apt install xvfb
