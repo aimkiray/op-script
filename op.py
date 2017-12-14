@@ -102,7 +102,6 @@ def login(email, password):
     response = browser.page_source
     # response = request.get(url, headers=headers)
     if "Can't access your account" in response:
-        global request
         # 获取 cookies
         request.cookies = cookiejar.LWPCookieJar(filename='cookies')
         # 加载 cookies
@@ -120,7 +119,6 @@ def login(email, password):
         # 保存cookies
         request.cookies.save()
         # 如果执行到这里，说明没开anti-bot
-        global requests_mode
         requests_mode = True
     elif "Checking your browser before accessing" in response:
         # 如果启用了anti_bot
@@ -259,7 +257,8 @@ def re_create(csrf_token, vm_id, local, flag):
         flag += 1
         # +3s提交一次
         time.sleep(3)
-        re_create(csrf_token, vm_id, local, flag)
+        return [csrf_token, vm_id, local, flag]
+        # re_create(csrf_token, vm_id, local, flag)
 
 
 if __name__ == '__main__':
@@ -273,6 +272,10 @@ if __name__ == '__main__':
         if token[0] == "" or token[1] == "":
             logging.error("致命错误！无法获取 token")
             exit()
-        re_create(token[0], token[1], get_local(), 1)
+        param = [token[0], token[1], get_local(), 1]
+        while True:
+            param = re_create(param[0], param[1], param[2], param[3])
     else:
-        re_create("", "", get_local(), 1)
+        param = ["", "", get_local(), 1]
+        while True:
+            param = re_create(param[0], param[1], param[2], param[3])
