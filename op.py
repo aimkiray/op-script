@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time : 2017/11/28 15:28
+from functools import wraps
 
 import requests
 import logging
@@ -39,7 +40,7 @@ chrome_options.add_argument("user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWe
 # 新建全局 selenium
 browser = webdriver.Chrome(chrome_options=chrome_options)
 # 最长等待 120s
-browser.implicitly_wait(100)
+browser.implicitly_wait(120)
 # 抄起 jQuery 就是干 XD（形势所迫）
 jquery = open("jquery-3.2.1.min.js", "r").read()
 
@@ -180,85 +181,103 @@ def get_token_selenium():
     return [csrf_token, vm_id]
 
 
-def re_create(csrf_token, vm_id, local, flag):
-    # 找不同（计数）
-    if flag == 1:
-        logging.info("The 1st attempt...")
-    elif flag == 2:
-        logging.info("The 2nd attempt...")
-    elif flag == 3:
-        logging.info("The 3rd attempt...")
-    else:
-        logging.info("The %dth attempt...", flag)
-    if requests_mode:
-        data = {
-            "plan": "Plan 01",
-            "csrf_token": csrf_token,
-            "vm_id": vm_id,
-            "location": local,
-            "os": "linux-centos-7.1503.01-x86_64-minimal-gen2-v1",
-            "hostname": "cat.neko",
-            "root": ""
-        }
-        url = "https://panel.op-net.com/cloud/open"
-        response = request.post(url, data=data, headers=headers)
-        response_text = response.text
-    else:
-        if csrf_token == "" or vm_id == "":
-            token_selenium = get_token_selenium()
-            if token_selenium[0] == "" or token_selenium[1] == "":
-                logging.error("致命错误！无法获取 token")
-                exit()
-            else:
-                csrf_token = token_selenium[0]
-                vm_id = token_selenium[1]
-        form_buy = '''
-        var form = $("<form></form>");
-        form.attr('action', '/cloud/open');
-        form.attr('method', 'post');
-        form.attr('onsubmit', 'ShowLoading()');
-        var params = {
-            "plan": "Plan 01",
-            "csrf_token": "%s",
-            "vm_id": %s,
-            "location": %s,
-            "os": "linux-centos-7.1503.01-x86_64-minimal-gen2-v1",
-            "hostname": "cat.neko",
-            "root": ""
-        };
-        for (var key in params) {
-            var input = $("<input type='hidden' name='" + key + "' />");
-            input.attr('value', params[key]);
-            form.append(input);
-        }
-        form.appendTo("body");
-        form.css('display', 'none');
-        form.submit();''' % (csrf_token, vm_id, local)
-        # form_buy = form_buy.replace(" ", "").replace("\n", "")
-        browser.execute_script(jquery)
-        browser.execute_script(form_buy)
-        # 检查界面是否加载完毕
-        locator_re = (By.XPATH, '''//*[@id="btnSumbit"]''')
-        # locator_else = (By.XPATH, '''''')  TODO 创建成功的情况（咱还没见过呢(┬＿┬)）
-        try:
-            WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator_re))
-        except Exception as timeout:
-            # 可能是超时或成功，继续判断
-            logging.debug(timeout)
-        response_text = browser.page_source
-    # 判断是否创建成功
-    if "Server Creation Progress" in response_text:
-        logging.debug(response_text)
-        logging.info("咦？好像成功了！")
-        # 关闭 chrome
-        browser.close()
-        exit()
-    else:
-        flag += 1
-        # +3s提交一次
-        time.sleep(3)
-        return [csrf_token, vm_id, local, flag]
-        # re_create(csrf_token, vm_id, local, flag)
+def create_loop(csrf_token, vm_id, local, flag):
+    while True:
+        # 找不同（计数）
+        if flag == 1:
+            logging.info("The 1st attempt...")
+        elif flag == 2:
+            logging.info("The 2nd attempt...")
+        elif flag == 3:
+            logging.info("The 3rd attempt...")
+        else:
+            logging.info("The %dth attempt...", flag)
+        if requests_mode:
+            data = {
+                "plan": "Plan 01",
+                "csrf_token": csrf_token,
+                "vm_id": vm_id,
+                "location": local,
+                "os": "linux-centos-7.1503.01-x86_64-minimal-gen2-v1",
+                "hostname": "cat.neko",
+                "root": ""
+            }
+            url = "https://panel.op-net.com/cloud/open"
+            response = request.post(url, data=data, headers=headers)
+            response_text = response.text
+        else:
+            if csrf_token == "" or vm_id == "":
+                token_selenium = get_token_selenium()
+                if token_selenium[0] == "" or token_selenium[1] == "":
+                    logging.error("致命错误！无法获取 token")
+                    # 关闭 chrome
+                    browser.close()
+                    exit()
+                else:
+                    csrf_token = token_selenium[0]
+                    vm_id = token_selenium[1]
+            form_buy = '''
+            var form = $("<form></form>");
+            form.attr('action', '/cloud/open');
+            form.attr('method', 'post');
+            form.attr('onsubmit', 'ShowLoading()');
+            var params = {
+                "plan": "Plan 01",
+                "csrf_token": "%s",
+                "vm_id": %s,
+                "location": %s,
+                "os": "linux-centos-7.1503.01-x86_64-minimal-gen2-v1",
+                "hostname": "cat.neko",
+                "root": ""
+            };
+            for (var key in params) {
+                var input = $("<input type='hidden' name='" + key + "' />");
+                input.attr('value', params[key]);
+                form.append(input);
+            }
+            form.appendTo("body");
+            form.css('display', 'none');
+            form.submit();''' % (csrf_token, vm_id, local)
+            # form_buy = form_buy.replace(" ", "").replace("\n", "")
+            browser.execute_script(jquery)
+            browser.execute_script(form_buy)
+            # 检查界面是否加载完毕
+            locator_re = (By.XPATH, '''//*[@id="btnSumbit"]''')
+            # locator_else = (By.XPATH, '''''')  TODO 创建成功的情况（咱还没见过呢(┬＿┬)）
+            try:
+                WebDriverWait(browser, 100, 0.5).until(ec.presence_of_element_located(locator_re))
+            except Exception as timeout:
+                # 可能是超时或成功，继续判断
+                logging.debug(timeout)
+            response_text = browser.page_source
+        # 判断是否创建成功
+        if "Server Creation Progress" in response_text:
+            logging.debug(response_text)
+            logging.info("咦？好像成功了！")
+            # 关闭 chrome
+            browser.close()
+            exit()
+        else:
+            flag += 1
+            # +3s提交一次
+            time.sleep(3)
+            # return [csrf_token, vm_id, local, flag]
+            # re_create(csrf_token, vm_id, local, flag)
+
+
+# def cache_loop(fn):
+#     cache = {}
+#     miss = object()
+#
+#     @wraps(fn)
+#     def wrapper(*args):
+#         result = cache.get(args, miss)
+#         if result is miss:
+#             result = fn(*args)
+#             cache[args] = result
+#         return result
+#
+#     return wrapper
 
 
 if __name__ == '__main__':
@@ -272,10 +291,6 @@ if __name__ == '__main__':
         if token[0] == "" or token[1] == "":
             logging.error("致命错误！无法获取 token")
             exit()
-        param = [token[0], token[1], get_local(), 1]
-        while True:
-            param = re_create(param[0], param[1], param[2], param[3])
+        create_loop(token[0], token[1], get_local(), 1)
     else:
-        param = ["", "", get_local(), 1]
-        while True:
-            param = re_create(param[0], param[1], param[2], param[3])
+        create_loop("", "", get_local(), 1)
