@@ -120,6 +120,7 @@ def login(email, password):
         # 保存cookies
         request.cookies.save()
         # 如果执行到这里，说明没开anti-bot
+        global requests_mode
         requests_mode = True
     elif "Checking your browser before accessing" in response:
         # 如果启用了anti_bot
@@ -182,6 +183,7 @@ def get_token_selenium():
 
 
 def create_loop(csrf_token, vm_id, local, flag):
+    global requests_mode
     while True:
         # 找不同（计数）
         if flag == 1:
