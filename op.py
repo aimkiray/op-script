@@ -91,43 +91,39 @@ def bypass_anti_bot(url, email, password):
         browser.find_element_by_id("password").send_keys(password)
         browser.find_element_by_xpath("//input[@class='button'][@type='submit']").submit()
         logging.info("登录成功！")
-    else:
-        logging.info("已登录")
 
 
 def login(email, password):
-    logging.info("检查是否登陆")
-    # 提交get请求检查是否已经登录
+    logging.info("登录中...")
+    # 提交get请求检查状态
     url = "https://panel.op-net.com/login"
-    browser.get(url)
-    response = browser.page_source
-    # response = request.get(url, headers=headers)
-    if "Can't access your account" in response:
+    response = request.get(url, headers=headers)
+    if "Can't access your account" in response.text:
         # 获取 cookies
         request.cookies = cookiejar.LWPCookieJar(filename='cookies')
         # 加载 cookies
         try:
             request.cookies.load(ignore_discard=True)
         except Exception as e:
-            logging.warning("No cookie, because %s", e)
-        logging.info("登录中...")
+            logging.warning("No cookies found, because %s", e)
         data = {
             'email': email,
             'password': password
         }
-        url = 'https://panel.op-net.com/login'
-        request.post(url, data=data, headers=headers)
+        url_login = 'https://panel.op-net.com/login'
+        request.post(url_login, data=data, headers=headers)
         # 保存cookies
         request.cookies.save()
         # 如果执行到这里，说明没开anti-bot
         global requests_mode
         requests_mode = True
-    elif "Checking your browser before accessing" in response:
+        logging.info("登录成功！")
+    elif "Checking your browser before accessing" in response.text:
         # 如果启用了anti_bot
         bypass_anti_bot(url, email, password)
     else:
-        logging.debug(response)
-        logging.info("发生异常，请检查日志")
+        logging.debug(response.text)
+        logging.info("发生异常，请检查日志！")
 
 
 # 开启requests_mode才需要的东西
@@ -182,8 +178,10 @@ def get_token_selenium():
     return [csrf_token, vm_id]
 
 
-def create_loop(csrf_token, vm_id, local, flag):
+def create_loop(local, flag):
     global requests_mode
+    csrf_token = ""
+    vm_id = ""
     while True:
         # 找不同（计数）
         if flag == 1:
@@ -195,6 +193,14 @@ def create_loop(csrf_token, vm_id, local, flag):
         else:
             logging.info("The %dth attempt...", flag)
         if requests_mode:
+            if csrf_token == "" or vm_id == "":
+                token = get_token()
+                if token[0] == "" or token[1] == "":
+                    logging.error("致命错误！无法获取 token")
+                    exit()
+                else:
+                    csrf_token = token[0]
+                    vm_id = token[1]
             data = {
                 "plan": "Plan 01",
                 "csrf_token": csrf_token,
@@ -263,8 +269,6 @@ def create_loop(csrf_token, vm_id, local, flag):
             flag += 1
             # +3s提交一次
             time.sleep(3)
-            # return [csrf_token, vm_id, local, flag]
-            # re_create(csrf_token, vm_id, local, flag)
 
 
 # def cache_loop(fn):
@@ -286,13 +290,5 @@ if __name__ == '__main__':
     logging.info("Start")
     time.sleep(0.1)
     login(get_email(), get_password())
-    if requests_mode:
-        # 如果没开 anti-bot，则不需要 js 环境
-        time.sleep(0.1)
-        token = get_token()
-        if token[0] == "" or token[1] == "":
-            logging.error("致命错误！无法获取 token")
-            exit()
-        create_loop(token[0], token[1], get_local(), 1)
-    else:
-        create_loop("", "", get_local(), 1)
+    time.sleep(0.1)
+    create_loop(get_local(), 1)
